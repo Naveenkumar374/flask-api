@@ -3,26 +3,31 @@ import pyodbc
 
 app = Flask(__name__)
 
-# Database connection
+# Database connection function
 def get_db_connection():
-    # Use your provided connection details
-    conn = pyodbc.connect(
-        'DRIVER={SQL Server};'
-        'SERVER=195.201.83.144;'  # Your server address
-        'DATABASE=geoAdmin;'      # Your database name
-        'UID=geoAdmin;'           # Your username
-        'PWD=GeoSoft@123;'        # Your password
-    )
-    return conn
+    try:
+        conn = pyodbc.connect(
+            'DRIVER={ODBC Driver 17 for SQL Server};'  # Updated for Linux on Render
+            'SERVER=195.201.83.144;'  # Your server address
+            'DATABASE=geoAdmin;'      # Your database name
+            'UID=geoAdmin;'           # Your username
+            'PWD=GeoSoft@123;'        # Your password
+        )
+        return conn
+    except pyodbc.Error as e:
+        print(f"Database Connection Error: {e}")
+        return None
 
 # API route to fetch data from MasParty table
 @app.route('/geosoft/mas_party', methods=['GET'])
 def get_mas_party_data():
     conn = get_db_connection()
-    cursor = conn.cursor()
+    
+    if conn is None:
+        return jsonify({"error": "Database connection failed"}), 500
 
+    cursor = conn.cursor()
     try:
-       
         query = "SELECT Pty_Code, Pty_Name, Validity, Active FROM MasParty"
         cursor.execute(query)
         result = cursor.fetchall()
@@ -42,5 +47,6 @@ def get_mas_party_data():
         cursor.close()
         conn.close()
 
+# Run the Flask app
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=10000)  # Render requires port 10000
